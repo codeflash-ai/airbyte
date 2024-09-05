@@ -60,6 +60,9 @@ class RecordDiffer(
      */
     private val everythingComparator = identityComparator.thenComparing(sortComparator)
 
+    /**
+     * Returns a pretty-printed diff of the two lists, or null if they were identical
+     */
     fun diffRecords(
         expectedRecords: List<OutputRecord>,
         actualRecords: List<OutputRecord>

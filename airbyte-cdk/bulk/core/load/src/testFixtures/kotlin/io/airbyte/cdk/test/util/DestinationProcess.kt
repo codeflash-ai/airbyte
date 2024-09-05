@@ -2,9 +2,13 @@ package io.airbyte.cdk.test.util
 
 import com.fasterxml.jackson.databind.JsonNode
 import io.airbyte.cdk.Operation
+import io.airbyte.cdk.command.CliRunner
 import io.airbyte.protocol.models.v0.AirbyteMessage
 import io.airbyte.protocol.models.v0.ConfiguredAirbyteCatalog
 
+// This whole file is very wishy-washy, until we figure out the exact
+// micronaut stuff. But it's directionally correct, and I'd rather nail down
+// the actual test stuff first.
 interface DestinationProcess {
     fun sendMessage(message: AirbyteMessage)
 
@@ -19,17 +23,24 @@ interface DestinationProcess {
     fun waitUntilDone()
 }
 
+fun interface DestinationProcessFactory<Config> {
+    fun createDestinationProcess(
+        command: String,
+        config: Config,
+        catalog: ConfiguredAirbyteCatalog,
+    ): DestinationProcess
+}
+
 class NonDockerizedDestination(
     command: String,
     config: JsonNode,
     catalog: ConfiguredAirbyteCatalog,
-    // some other param to get whatever code we're actually running,
-    // i.e. equivalent to io.airbyte.integrations.base.destination.Destination
-    operation: Operation,
 ): DestinationProcess {
     init {
         // invoke whatever CDK stuff exists to run a destination connector
         // but use some reasonable interface instead of stdin/stdout
+        // maybe we don't use literal actual CliRunner, but it's something like this
+        CliRunner.runDestination(command, config = TODO(), catalog = catalog)
     }
 
     override fun sendMessage(message: AirbyteMessage) {
