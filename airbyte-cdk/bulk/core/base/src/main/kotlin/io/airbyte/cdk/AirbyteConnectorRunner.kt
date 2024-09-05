@@ -44,6 +44,11 @@ class AirbyteDestinationRunner(
 /**
  * Replacement for the Micronaut CLI application runner that configures the CLI components and adds
  * the custom property source used to turn the arguments into configuration properties.
+ *
+ * @param beans This param is intended for use in tests, where you might want to inject beans
+ *   without actually _defining_ them. Normally, you should just use standard Micronaut injection.
+ *   For example, see how [io.airbyte.cdk.test.util.NonDockerizedDestination.destination] uses this
+ *   to replace System.in with a PipedInputStream.
  */
 sealed class AirbyteConnectorRunner(
     val connectorType: String,

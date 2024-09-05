@@ -19,6 +19,7 @@ class E2eBasicFunctionalityIntegrationTest: BasicFunctionalityIntegrationTest(
     @Test
     fun testWrite() {
         val process = destinationProcessFactory.createDestinationProcess("write")
+        process.waitUntilDone()
         val messages = process.readMessages()
     }
 }

@@ -14,6 +14,7 @@ open class BasicFunctionalityIntegrationTest(
     @Test
     open fun testSpec() {
         val process = destinationProcessFactory.createDestinationProcess("spec")
+        process.waitUntilDone()
         val messages = process.readMessages()
         val specMessage = messages.filterNotNull()
             .firstOrNull { it.type == AirbyteMessage.Type.SPEC }

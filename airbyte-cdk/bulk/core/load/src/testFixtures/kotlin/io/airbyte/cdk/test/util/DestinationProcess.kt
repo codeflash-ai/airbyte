@@ -52,7 +52,7 @@ class NonDockerizedDestination(
     // TODO CliRunner.runDestination() is blocking, so we can't use it directly
     //   but this is objectively wrong - we need to be able to stream the output
     //   throughout the sync, whereas right now we have to do
-    //   destination.get().messages(). Which blocks unti the whole destination
+    //   destination.get().messages(). Which blocks until the whole destination
     //   finishes running.
     private val destination: Future<BufferingOutputConsumer> =
         CompletableFuture.supplyAsync {
@@ -81,8 +81,11 @@ class NonDockerizedDestination(
     }
 
     override fun waitUntilDone() {
+        // Flush everything to destination's stdin
         destinationStdinPipe.close()
-        TODO("Not yet implemented")
+        // Then close stdin + wait for the destination to finish consuming it
+        destinationStdin.close()
+        // TODO actually wait
     }
 }
 
