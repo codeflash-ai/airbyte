@@ -7,6 +7,8 @@ import javax.inject.Singleton
 @Singleton
 class E2eDestinationDataDumper: DestinationDataDumper {
     override fun dumpRecords(streamName: String, streamNamespace: String?): List<OutputRecord> {
+        // E2e destination doesn't actually write records, so we shouldn't even
+        // have tests that try to read back the records
         throw NotImplementedError()
     }
 }

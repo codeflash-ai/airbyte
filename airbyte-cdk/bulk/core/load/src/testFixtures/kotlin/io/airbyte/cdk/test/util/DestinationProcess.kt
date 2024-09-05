@@ -41,6 +41,7 @@ class NonDockerizedDestination(
     // invoke whatever CDK stuff exists to run a destination connector
     // but use some reasonable interface instead of stdin/stdout
     // maybe we don't use literal actual CliRunner, but it's something like this
+    // TODO CliRunner.run is going to block, so definitely don't use it as-is
     private val destination: BufferingOutputConsumer =
         CliRunner.runDestination(command, config = config, catalog = catalog)
 
@@ -58,9 +59,11 @@ class NonDockerizedDestination(
     }
 }
 
+// Notably, not actually a Micronaut factory.
+// TODO only inject this when not running in CI
 @Singleton
 class NonDockerizedDestinationFactory(
-    val config: ConfigurationJsonObjectBase
+    private val config: ConfigurationJsonObjectBase
 ): DestinationProcessFactory() {
     override fun createDestinationProcess(
         command: String,
@@ -70,6 +73,7 @@ class NonDockerizedDestinationFactory(
     }
 }
 
+// TODO define a factory for this class + @Require(CI)
 class DockerizedDestination(
     command: String,
     config: JsonNode?,

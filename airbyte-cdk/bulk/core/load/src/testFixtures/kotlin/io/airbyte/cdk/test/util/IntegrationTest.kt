@@ -24,11 +24,6 @@ abstract class IntegrationTest {
     // because some tests want to run multiple syncs, so we need to run the destination
     // multiple times.
     @Inject lateinit var destinationProcessFactory: DestinationProcessFactory
-
-    // Maybe inject the config? Different test classes need to inject different
-    // configs (e.g. bigquery: gcs staging vs direct load, raw namespace override, etc.)
-    // TODO figure out the whole default namespace thing
-
     @Inject lateinit var dataDumper: DestinationDataDumper
     @Inject lateinit var recordMangler: DestinationRecordMangler
 
