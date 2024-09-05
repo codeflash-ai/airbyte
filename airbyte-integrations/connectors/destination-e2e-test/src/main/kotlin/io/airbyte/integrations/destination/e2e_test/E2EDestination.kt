@@ -15,7 +15,7 @@ class E2EDestination {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            AirbyteDestinationRunner.run(*args)
+            AirbyteDestinationRunner.run(args = args)
         }
     }
 }

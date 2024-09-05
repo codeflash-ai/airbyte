@@ -11,6 +11,7 @@ import io.airbyte.cdk.util.Jsons
 import io.airbyte.protocol.models.v0.AirbyteMessage
 import io.airbyte.protocol.models.v0.AirbyteStateMessage
 import io.airbyte.protocol.models.v0.ConfiguredAirbyteCatalog
+import io.micronaut.context.RuntimeBeanDefinition
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.deleteIfExists
@@ -44,9 +45,10 @@ data object CliRunner {
         config: ConfigurationJsonObjectBase? = null,
         catalog: ConfiguredAirbyteCatalog? = null,
         state: List<AirbyteStateMessage>? = null,
+        beans: Array<out RuntimeBeanDefinition<*>> = emptyArray(),
     ): BufferingOutputConsumer =
         runConnector(op, config, catalog, state) { args: Array<String> ->
-            AirbyteDestinationRunner(args)
+            AirbyteDestinationRunner(beans, args)
         }
 
     private fun runConnector(

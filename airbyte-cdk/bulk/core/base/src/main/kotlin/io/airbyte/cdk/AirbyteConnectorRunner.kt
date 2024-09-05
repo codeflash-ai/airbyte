@@ -8,6 +8,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.CommandLinePropertySource
 import io.micronaut.context.env.Environment
 import io.micronaut.core.cli.CommandLine as MicronautCommandLine
+import io.micronaut.context.RuntimeBeanDefinition
 import java.nio.file.Path
 import kotlin.system.exitProcess
 import picocli.CommandLine
@@ -18,7 +19,7 @@ import picocli.CommandLine.Model.UsageMessageSpec
 /** Source connector entry point. */
 class AirbyteSourceRunner(
     args: Array<out String>,
-) : AirbyteConnectorRunner("source", args) {
+) : AirbyteConnectorRunner("source", args, beans = emptyArray()) {
     companion object {
         @JvmStatic
         fun run(vararg args: String) {
@@ -29,12 +30,13 @@ class AirbyteSourceRunner(
 
 /** Destination connector entry point. */
 class AirbyteDestinationRunner(
+    beans: Array<out RuntimeBeanDefinition<*>>,
     args: Array<out String>,
-) : AirbyteConnectorRunner("destination", args) {
+) : AirbyteConnectorRunner("destination", args, beans) {
     companion object {
         @JvmStatic
-        fun run(vararg args: String) {
-            AirbyteDestinationRunner(args).run<AirbyteConnectorRunnable>()
+        fun run(beans: Array<out RuntimeBeanDefinition<*>> = emptyArray(), vararg args: String) {
+            AirbyteDestinationRunner(beans, args).run<AirbyteConnectorRunnable>()
         }
     }
 }
@@ -46,6 +48,7 @@ class AirbyteDestinationRunner(
 sealed class AirbyteConnectorRunner(
     val connectorType: String,
     val args: Array<out String>,
+    val beans: Array<out RuntimeBeanDefinition<*>>,
 ) {
     val envs: Array<String> = arrayOf(Environment.CLI, connectorType)
 
@@ -65,6 +68,7 @@ sealed class AirbyteConnectorRunner(
                     commandLinePropertySource,
                     MetadataYamlPropertySource(),
                 )
+                .beanDefinitions(*beans)
                 .start()
         val isTest: Boolean = ctx.environment.activeNames.contains(Environment.TEST)
         val picocliFactory: CommandLine.IFactory = MicronautFactory(ctx)

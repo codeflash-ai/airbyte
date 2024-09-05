@@ -5,8 +5,17 @@ import io.airbyte.cdk.Operation
 import io.airbyte.cdk.command.CliRunner
 import io.airbyte.cdk.command.ConfigurationJsonObjectBase
 import io.airbyte.cdk.output.BufferingOutputConsumer
+import io.airbyte.protocol.models.Jsons
 import io.airbyte.protocol.models.v0.AirbyteMessage
 import io.airbyte.protocol.models.v0.ConfiguredAirbyteCatalog
+import io.micronaut.context.RuntimeBeanDefinition
+import java.io.InputStream
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
+import java.io.PrintStream
+import java.io.PrintWriter
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 import javax.inject.Singleton
 
 // This whole file is very wishy-washy, until we figure out the exact
@@ -38,29 +47,49 @@ class NonDockerizedDestination(
     config: ConfigurationJsonObjectBase?,
     catalog: ConfiguredAirbyteCatalog?,
 ): DestinationProcess {
-    // invoke whatever CDK stuff exists to run a destination connector
-    // but use some reasonable interface instead of stdin/stdout
-    // maybe we don't use literal actual CliRunner, but it's something like this
-    // TODO CliRunner.run is going to block, so definitely don't use it as-is
-    private val destination: BufferingOutputConsumer =
-        CliRunner.runDestination(command, config = config, catalog = catalog)
+    private val destinationStdin = PipedInputStream()
+    private val destinationStdinPipe = PrintWriter(PipedOutputStream(destinationStdin))
+    // TODO CliRunner.runDestination() is blocking, so we can't use it directly
+    //   but this is objectively wrong - we need to be able to stream the output
+    //   throughout the sync, whereas right now we have to do
+    //   destination.get().messages(). Which blocks unti the whole destination
+    //   finishes running.
+    private val destination: Future<BufferingOutputConsumer> =
+        CompletableFuture.supplyAsync {
+            CliRunner.runDestination(
+                command,
+                config = config,
+                catalog = catalog,
+                // TODO is this really the right way to achieve this?
+                beans = arrayOf(
+                    RuntimeBeanDefinition.builder(InputStream::class.java) { destinationStdin }
+                        .replaces(InputStream::class.java)
+                        .build()
+                )
+            )
+        }
+
 
     override fun sendMessage(message: AirbyteMessage) {
-        TODO("Not yet implemented")
+        destinationStdinPipe.println(Jsons.serialize(message))
     }
 
     override fun readMessages(): List<AirbyteMessage?> {
-        return destination.messages() + listOf(null)
+        // TODO define a better interface than null-terminated list
+        //   (this will be easier once we have a real thing instead of CliRunner)
+        return destination.get().messages() + listOf(null)
     }
 
     override fun waitUntilDone() {
-        // send a "stdin closed" signal
+        destinationStdinPipe.close()
         TODO("Not yet implemented")
     }
 }
 
-// Notably, not actually a Micronaut factory.
-// TODO only inject this when not running in CI
+// Notably, not actually a Micronaut factory. We want to inject the actual
+// factory into our tests, not a pre-instantiated destination, because we want
+// to run multiple destination processes per test.
+// TODO only inject this when not running in CI, a la @Requires(notEnv = "CI")
 @Singleton
 class NonDockerizedDestinationFactory(
     private val config: ConfigurationJsonObjectBase
@@ -73,7 +102,7 @@ class NonDockerizedDestinationFactory(
     }
 }
 
-// TODO define a factory for this class + @Require(CI)
+// TODO define a factory for this class + @Require(env = CI)
 class DockerizedDestination(
     command: String,
     config: JsonNode?,
