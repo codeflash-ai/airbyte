@@ -19,15 +19,16 @@ private val logger = KotlinLogging.logger {}
 
 @MicronautTest
 @Execution(ExecutionMode.CONCURRENT)
-abstract class IntegrationTest<Config: Any> {
+abstract class IntegrationTest {
     // Intentionally don't inject the actual destination process - we need a full factory
     // because some tests want to run multiple syncs, so we need to run the destination
     // multiple times.
-    @Inject lateinit var destinationProcessFactory: DestinationProcessFactory<Config>
+    @Inject lateinit var destinationProcessFactory: DestinationProcessFactory
+
     // Maybe inject the config? Different test classes need to inject different
     // configs (e.g. bigquery: gcs staging vs direct load, raw namespace override, etc.)
     // TODO figure out the whole default namespace thing
-    @Inject lateinit var config: Config
+
     @Inject lateinit var dataDumper: DestinationDataDumper
     @Inject lateinit var recordMangler: DestinationRecordMangler
 
@@ -63,7 +64,6 @@ abstract class IntegrationTest<Config: Any> {
     ) {
         val destination = destinationProcessFactory.createDestinationProcess(
             "write",
-            config,
             catalog,
         )
         TODO()

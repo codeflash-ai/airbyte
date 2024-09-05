@@ -3,8 +3,11 @@ package io.airbyte.cdk.test.util
 import com.fasterxml.jackson.databind.JsonNode
 import io.airbyte.cdk.Operation
 import io.airbyte.cdk.command.CliRunner
+import io.airbyte.cdk.command.ConfigurationJsonObjectBase
+import io.airbyte.cdk.output.BufferingOutputConsumer
 import io.airbyte.protocol.models.v0.AirbyteMessage
 import io.airbyte.protocol.models.v0.ConfiguredAirbyteCatalog
+import javax.inject.Singleton
 
 // This whole file is very wishy-washy, until we figure out the exact
 // micronaut stuff. But it's directionally correct, and I'd rather nail down
@@ -23,37 +26,47 @@ interface DestinationProcess {
     fun waitUntilDone()
 }
 
-abstract class DestinationProcessFactory<Config> {
+abstract class DestinationProcessFactory {
     abstract fun createDestinationProcess(
         command: String,
-        config: Config? = null,
         catalog: ConfiguredAirbyteCatalog? = null,
     ): DestinationProcess
 }
 
 class NonDockerizedDestination(
     command: String,
-    config: JsonNode?,
+    config: ConfigurationJsonObjectBase?,
     catalog: ConfiguredAirbyteCatalog?,
 ): DestinationProcess {
-    init {
-        // invoke whatever CDK stuff exists to run a destination connector
-        // but use some reasonable interface instead of stdin/stdout
-        // maybe we don't use literal actual CliRunner, but it's something like this
-        CliRunner.runDestination(command, config = TODO(), catalog = catalog)
-    }
+    // invoke whatever CDK stuff exists to run a destination connector
+    // but use some reasonable interface instead of stdin/stdout
+    // maybe we don't use literal actual CliRunner, but it's something like this
+    private val destination: BufferingOutputConsumer =
+        CliRunner.runDestination(command, config = config, catalog = catalog)
 
     override fun sendMessage(message: AirbyteMessage) {
         TODO("Not yet implemented")
     }
 
-    override fun readMessages(): List<AirbyteMessage> {
-        TODO("Not yet implemented")
+    override fun readMessages(): List<AirbyteMessage?> {
+        return destination.messages() + listOf(null)
     }
 
     override fun waitUntilDone() {
         // send a "stdin closed" signal
         TODO("Not yet implemented")
+    }
+}
+
+@Singleton
+class NonDockerizedDestinationFactory(
+    val config: ConfigurationJsonObjectBase
+): DestinationProcessFactory() {
+    override fun createDestinationProcess(
+        command: String,
+        catalog: ConfiguredAirbyteCatalog?
+    ): DestinationProcess {
+        return NonDockerizedDestination(command, config, catalog)
     }
 }
 
@@ -71,7 +84,7 @@ class DockerizedDestination(
         TODO("Not yet implemented")
     }
 
-    override fun readMessages(): List<AirbyteMessage> {
+    override fun readMessages(): List<AirbyteMessage?> {
         // read everything from the process' stdout
         TODO("Not yet implemented")
     }

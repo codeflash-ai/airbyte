@@ -37,4 +37,5 @@ dependencies {
 
     testImplementation platform('org.testcontainers:testcontainers-bom:1.19.8')
     testImplementation project(":airbyte-cdk:bulk:core:bulk-cdk-core-load")
+    testImplementation testFixtures(project(":airbyte-cdk:bulk:core:bulk-cdk-core-load"))
 }

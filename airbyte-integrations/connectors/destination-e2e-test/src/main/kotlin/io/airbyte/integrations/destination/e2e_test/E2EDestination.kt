@@ -11,7 +11,7 @@ import jakarta.inject.Singleton
 import java.io.FileInputStream
 import java.io.InputStream
 
-class E2EDestination {
+class BE2EDestination {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
