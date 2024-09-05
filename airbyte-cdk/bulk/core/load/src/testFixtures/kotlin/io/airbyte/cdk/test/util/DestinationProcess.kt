@@ -23,18 +23,18 @@ interface DestinationProcess {
     fun waitUntilDone()
 }
 
-fun interface DestinationProcessFactory<Config> {
-    fun createDestinationProcess(
+abstract class DestinationProcessFactory<Config> {
+    abstract fun createDestinationProcess(
         command: String,
-        config: Config,
-        catalog: ConfiguredAirbyteCatalog,
+        config: Config? = null,
+        catalog: ConfiguredAirbyteCatalog? = null,
     ): DestinationProcess
 }
 
 class NonDockerizedDestination(
     command: String,
-    config: JsonNode,
-    catalog: ConfiguredAirbyteCatalog,
+    config: JsonNode?,
+    catalog: ConfiguredAirbyteCatalog?,
 ): DestinationProcess {
     init {
         // invoke whatever CDK stuff exists to run a destination connector
@@ -59,8 +59,8 @@ class NonDockerizedDestination(
 
 class DockerizedDestination(
     command: String,
-    config: JsonNode,
-    catalog: ConfiguredAirbyteCatalog,
+    config: JsonNode?,
+    catalog: ConfiguredAirbyteCatalog?,
 ): DestinationProcess {
     init {
         // launch a docker container...
