@@ -56,6 +56,7 @@ class NonDockerizedDestination(
     //   finishes running.
     private val destination: Future<BufferingOutputConsumer> =
         CompletableFuture.supplyAsync {
+            // TODO does this automatically echo logs to stdout? feels like it only does sometimes?
             CliRunner.runDestination(
                 command,
                 config = config,

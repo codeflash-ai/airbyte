@@ -9,7 +9,6 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlin.test.assertNull
 import kotlin.test.fail
 import org.apache.commons.lang3.RandomStringUtils
 import org.junit.jupiter.api.parallel.Execution
@@ -39,17 +38,14 @@ abstract class IntegrationTest {
         canonicalExpectedRecords: List<OutputRecord>,
         streamName: String,
         streamNamespace: String?,
+        extractPrimaryKey: (OutputRecord) -> List<Any?> = { emptyList() },
+        extractCursor: ((OutputRecord) -> Any?)? = null,
     ) {
         val actualRecords: List<OutputRecord> = dataDumper.dumpRecords(streamName, streamNamespace)
         val expectedRecords: List<OutputRecord> = canonicalExpectedRecords.map { recordMangler.mangleRecord(it) }
 
-        RecordDiffer(
-            // TODO accept these from the actual test
-            //   in particular, these need to be destinationified names
-            //   (e.g. snowflake uppercase ID)
-            { record -> listOf(record.data["id"]) },
-            { record -> record.data["updated_at"] },
-        ).diffRecords(expectedRecords, actualRecords)
+        RecordDiffer(extractPrimaryKey, extractCursor)
+            .diffRecords(expectedRecords, actualRecords)
             ?.let(::fail)
     }
 
