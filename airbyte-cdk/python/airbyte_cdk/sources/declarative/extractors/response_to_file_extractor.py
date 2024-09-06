@@ -6,7 +6,6 @@ import os
 import uuid
 import zlib
 from contextlib import closing
-from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Mapping, Optional, Tuple
 
 import pandas as pd
@@ -69,8 +68,7 @@ class ResponseToFileExtractor(RecordExtractor):
 
         res = b.replace(b"\x00", b"")
         if len(res) < len(b):
-            pass
-            # FIXME self.logger.warning("Filter 'null' bytes from string, size reduced %d -> %d chars", len(b), len(res))
+            self.logger.warning("Filter 'null' bytes from string, size reduced %d -> %d chars", len(b), len(res))
         return res
 
     def _save_to_file(self, response: Optional[requests.Response] = None) -> Tuple[str, str]:
