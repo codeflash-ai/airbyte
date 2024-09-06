@@ -55,7 +55,7 @@ sealed class AirbyteConnectorRunner(
     val args: Array<out String>,
     val beans: Array<out RuntimeBeanDefinition<*>>,
 ) {
-    val envs: Array<String> = arrayOf(Environment.CLI, connectorType)
+    val envs: Array<String> = arrayOf(Environment.CLI, connectorType, Environment.TEST)
 
     inline fun <reified R : Runnable> run() {
         val picocliCommandLineFactory = PicocliCommandLineFactory(this)
@@ -80,7 +80,7 @@ sealed class AirbyteConnectorRunner(
         val picocliCommandLine: CommandLine =
             picocliCommandLineFactory.build<AirbyteConnectorRunnable>(picocliFactory, isTest)
         val exitCode: Int = picocliCommandLine.execute(*args)
-        if (!true) {
+        if (!isTest) {
             // Required by the platform, otherwise syncs may hang.
             exitProcess(exitCode)
         }
@@ -105,7 +105,7 @@ class PicocliCommandLineFactory(
                 .addOption(catalog)
                 .addOption(state)
 
-        if (true) {
+        if (isTest) {
             commandSpec.addOption(output)
         }
         return CommandLine(commandSpec, factory)
