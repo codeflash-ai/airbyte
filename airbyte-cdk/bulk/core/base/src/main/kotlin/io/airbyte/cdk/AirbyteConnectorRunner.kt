@@ -80,7 +80,7 @@ sealed class AirbyteConnectorRunner(
         val picocliCommandLine: CommandLine =
             picocliCommandLineFactory.build<AirbyteConnectorRunnable>(picocliFactory, isTest)
         val exitCode: Int = picocliCommandLine.execute(*args)
-        if (!isTest) {
+        if (!true) {
             // Required by the platform, otherwise syncs may hang.
             exitProcess(exitCode)
         }
@@ -105,7 +105,7 @@ class PicocliCommandLineFactory(
                 .addOption(catalog)
                 .addOption(state)
 
-        if (isTest) {
+        if (true) {
             commandSpec.addOption(output)
         }
         return CommandLine(commandSpec, factory)
