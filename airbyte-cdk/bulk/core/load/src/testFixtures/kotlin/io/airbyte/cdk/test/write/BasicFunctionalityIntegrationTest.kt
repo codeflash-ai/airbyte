@@ -16,10 +16,13 @@ open class BasicFunctionalityIntegrationTest(
         val process = destinationProcessFactory.createDestinationProcess("spec")
         process.waitUntilDone()
         val messages = process.readMessages()
-        val specMessage = messages.filterNotNull()
-            .firstOrNull { it.type == AirbyteMessage.Type.SPEC }
+        val specMessages = messages.filter { it != null && it.type == AirbyteMessage.Type.SPEC }
 
-        assertNotNull(specMessage)
-        assertEquals(expectedSpec, specMessage!!.spec)
+        assertEquals(
+            specMessages.size,
+            1,
+            "Expected to receive exactly one spec message, but got ${specMessages.size}: $specMessages"
+        )
+        assertEquals(expectedSpec, specMessages.first()!!.spec)
     }
 }
