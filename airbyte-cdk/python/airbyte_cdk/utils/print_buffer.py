@@ -3,7 +3,7 @@
 import sys
 import time
 from io import StringIO
-from threading import RLock
+from threading import RLock, Lock
 from types import TracebackType
 from typing import Optional
 
@@ -37,25 +37,23 @@ class PrintBuffer:
             Exits the runtime context and restores the original stdout and stderr.
     """
 
-    def __init__(self, flush_interval: float = 0.1):
+    def __init__(self, flush_interval: int = 100_000_000):
         self.buffer = StringIO()
         self.flush_interval = flush_interval
-        self.last_flush_time = time.monotonic()
-        self.lock = RLock()
+        self.last_flush_time = time.monotonic_ns()
+        self.lock = Lock()
 
     def write(self, message: str) -> None:
         with self.lock:
             self.buffer.write(message)
-            current_time = time.monotonic()
-            if (current_time - self.last_flush_time) >= self.flush_interval:
-                self.flush()
-                self.last_flush_time = current_time
+            # if (time.monotonic_ns() - self.last_flush_time) >= 100_000_000:
+            #     self.flush()
+            #     self.last_flush_time = time.monotonic_ns()
 
     def flush(self) -> None:
-        with self.lock:
-            combined_message = self.buffer.getvalue()
-            sys.__stdout__.write(combined_message)  # type: ignore[union-attr]
-            self.buffer = StringIO()
+        combined_message = self.buffer.getvalue()
+        sys.__stdout__.write(combined_message)  # type: ignore[union-attr]
+        self.buffer = StringIO()
 
     def __enter__(self) -> "PrintBuffer":
         self.old_stdout, self.old_stderr = sys.stdout, sys.stderr
